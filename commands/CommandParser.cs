@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Discord.WebSocket;
 
 namespace DiscordBot
@@ -5,6 +8,11 @@ namespace DiscordBot
     public class CommandParser
     {
         private ulong _botId;
+
+        private Dictionary<Regex, Type> commands = new Dictionary<Regex, Type>()
+        {
+            { new Regex(@"wins\s+(\w+)", RegexOptions.IgnoreCase), typeof(StatsCommand) }
+        };
 
         public CommandParser(ulong botId)
         {
@@ -18,7 +26,22 @@ namespace DiscordBot
                 return null;
             }
 
-            return StatsCommand.TryCreate(message.Content);
+            foreach (KeyValuePair<Regex, Type> command in commands)
+            {
+                Match matches = command.Key.Match(message.Content);
+                if (matches.Groups.Count > 1)
+                {
+                    string[] commandArguments = new string[matches.Groups.Count - 1];
+                    for(int i = 0; i < matches.Groups.Count - 1; ++i)
+                    {
+                        commandArguments[i] = matches.Groups[i + 1].Value;
+                    }
+
+                    return (ICommand) Activator.CreateInstance(command.Value, new object[] { commandArguments });
+                }
+            }
+
+            return null;
         }
 
         private bool IsAtMe(SocketMessage message)

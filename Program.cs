@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Pubg.Net;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -15,6 +16,11 @@ namespace DiscordBot
             var config = Configuration.Create();
             var bot = new DiscordBot(config);
             bot.LoginAndStartAsync();
+
+            PubgApiConfiguration.Configure(opt =>
+            {
+                opt.ApiKey = config.pubgToken;
+            });
 
             await Task.Delay(-1);
         }

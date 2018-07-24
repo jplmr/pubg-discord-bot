@@ -2,13 +2,14 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Pubg.Net;
 
 namespace DiscordBot
 {
     public class DiscordBot : DiscordSocketClient
     {
         private Configuration _config;
-
+        private CommandParser _commandParser;
         public DiscordBot(Configuration config)
         {
             this._config = config;
@@ -22,16 +23,25 @@ namespace DiscordBot
             await StartAsync();
         }
 
-        private async Task HandleMessageReceivedAsync(SocketMessage arg)
+        private async Task HandleMessageReceivedAsync(SocketMessage message)
         {
-            if (!arg.Author.IsBot && arg.Author.Id != this.CurrentUser.Id)
+            if (!message.Author.IsBot && message.Author.Id != this.CurrentUser.Id)
             {
-                await arg.Channel.SendMessageAsync("You said: " + arg.Content);
+                var parsedCommand = this._commandParser.ParseCommand(message);
+                if (parsedCommand == null)
+                {
+                    return;
+                }
+
+                var response = await parsedCommand.Execute();
+                await message.Channel.SendMessageAsync(response);
             }
         }
 
         private async Task HandleReadyAsync()
         {
+            this._commandParser = new CommandParser(this.CurrentUser.Id);
+
             var enumerator = this.Guilds.GetEnumerator();
             enumerator.MoveNext();
 

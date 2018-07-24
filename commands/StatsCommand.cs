@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Pubg.Net;
+using Pubg.Net.Exceptions;
 
 namespace DiscordBot
 {
@@ -41,16 +42,23 @@ namespace DiscordBot
             {
                 PlayerNames = new string[] { this._playerName }
             };
-
-            var pubgPlayers = await _playerService.GetPlayersAsync(PubgRegion.PCNorthAmerica, playerFilter);
-            using (var pubgPlayersEnumerator = pubgPlayers.GetEnumerator())
+            
+            try
             {
-                if (pubgPlayersEnumerator.MoveNext())
+                var pubgPlayers = await _playerService.GetPlayersAsync(PubgRegion.PCNorthAmerica, playerFilter);
+                using (var pubgPlayersEnumerator = pubgPlayers.GetEnumerator())
                 {
-                    var playerId = pubgPlayersEnumerator.Current.Id;
-                    var pubgPlayer = await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, playerId, currentSeason.Id);
-                    return string.Format("{0} has {1} win(s) in duo FPP this season", this._playerName, pubgPlayer.GameModeStats.DuoFPP.Wins);
+                    if (pubgPlayersEnumerator.MoveNext())
+                    {
+                        var playerId = pubgPlayersEnumerator.Current.Id;
+                        var pubgPlayer = await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, playerId, currentSeason.Id);
+                        return string.Format("{0} has {1} win(s) in duo FPP this season", this._playerName, pubgPlayer.GameModeStats.DuoFPP.Wins);
+                    }
                 }
+            } 
+            catch (PubgNotFoundException)
+            {
+                return string.Format("error - could not find stats for player {0}", this._playerName);
             }
 
             return string.Format("error - could not find stats for player {0}", this._playerName);

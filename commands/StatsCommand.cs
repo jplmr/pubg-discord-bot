@@ -6,18 +6,54 @@ namespace DiscordBot
 {
     public class StatsCommand : ICommand
     {
-        private string _userId;
+        private string _playerName;
         private PubgPlayerService _playerService;
+        private PubgSeasonService _seasonService;
 
-        public StatsCommand(string userId){
-            this._userId = userId;
+        public StatsCommand(string playerName){
+            this._playerName = playerName;
             this._playerService = new PubgPlayerService();
+            this._seasonService = new PubgSeasonService();
         }
 
         public async Task<string> Execute()
         {
-            var pubgPlayer = await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, _userId, "2018-07");
-            return string.Format("{0} has {1} solo FFP NA win(s)", this._userId, pubgPlayer.GameModeStats.SoloFPP.Wins);
+            PubgSeason currentSeason = null;
+            using (var pubgSeasons = _seasonService.GetSeasons(PubgRegion.PCNorthAmerica).GetEnumerator())
+            {
+                while (pubgSeasons.MoveNext())
+                {
+                    if (pubgSeasons.Current.IsCurrentSeason)
+                    {
+                        currentSeason = pubgSeasons.Current;
+                        break;
+                    }
+                }
+            }
+
+            if (currentSeason == null)
+            {
+                return "error";
+            }
+
+            // get ID from player name
+            var playerFilter = new GetPubgPlayersRequest()
+            {
+                PlayerNames = new string[] { this._playerName }
+            };
+
+            var pubgPlayers = await _playerService.GetPlayersAsync(PubgRegion.PCNorthAmerica, playerFilter);
+            using (var pubgPlayersEnumerator = pubgPlayers.GetEnumerator())
+            {
+                if (pubgPlayersEnumerator.MoveNext())
+                {
+                    var playerId = pubgPlayersEnumerator.Current.Id;
+                    var pubgPlayer = await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, playerId, currentSeason.Id);
+                    return string.Format("{0} has {1} win(s) in duo FPP this season", this._playerName, pubgPlayer.GameModeStats.DuoFPP.Wins);
+                }
+            }
+
+            return string.Format("error - could not find stats for player {0}", this._playerName);
         }
 
         public static StatsCommand TryCreate(string input)

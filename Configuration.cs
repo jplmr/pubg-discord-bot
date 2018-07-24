@@ -5,6 +5,8 @@ namespace DiscordBot
 {
     public class Configuration
     {
+        public static Configuration ActiveConfiguration = Configuration.Create();
+
         public string discordToken { get; set; }
         public string pubgToken { get; set; }
 
@@ -18,4 +20,5 @@ namespace DiscordBot
             }
         }
     }
+
 }

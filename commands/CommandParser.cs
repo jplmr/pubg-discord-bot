@@ -11,7 +11,7 @@ namespace DiscordBot
 
         private Dictionary<Regex, Type> commands = new Dictionary<Regex, Type>()
         {
-            { new Regex(@"wins\s+(\w+)", RegexOptions.IgnoreCase), typeof(StatsCommand) }
+            { new Regex(@"(wins)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?", RegexOptions.IgnoreCase), typeof(StatsCommand) }
         };
 
         public CommandParser(ulong botId)

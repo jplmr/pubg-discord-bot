@@ -7,61 +7,55 @@ namespace DiscordBot
 {
     public class StatsCommand : ICommand
     {
+        private string _stat;
         private string _playerName;
-        private PubgPlayerService _playerService;
-        private PubgSeasonService _seasonService;
+        private TeamSize? _teamSize;
+        private Perspective? _perspective;
 
-        public StatsCommand(string playerName){
-            this._playerName = playerName;
+        private PubgPlayerService _playerService;
+
+        public StatsCommand(string[] commandArguments){
+            this._stat = commandArguments[0];
+            this._playerName = commandArguments[1];
+            this._teamSize = TypeHelper.GetTeamSize(commandArguments[2]);
+            this._perspective = TypeHelper.GetPerspective(commandArguments[3]);
+
             this._playerService = new PubgPlayerService();
-            this._seasonService = new PubgSeasonService();
         }
 
         public async Task<string> Execute()
         {
-            PubgSeason currentSeason = null;
-            using (var pubgSeasons = _seasonService.GetSeasons(PubgRegion.PCNorthAmerica).GetEnumerator())
-            {
-                while (pubgSeasons.MoveNext())
-                {
-                    if (pubgSeasons.Current.IsCurrentSeason)
-                    {
-                        currentSeason = pubgSeasons.Current;
-                        break;
-                    }
-                }
-            }
-
+            var currentSeason = SeasonHelper.GetCurrentSeason();
             if (currentSeason == null)
             {
-                return "error";
+                return "error - no active season";
             }
 
-            // get ID from player name
-            var playerFilter = new GetPubgPlayersRequest()
+            var pubgPlayer = await PlayerHelper.GetPlayerFromName(this._playerName, PubgRegion.PCNorthAmerica);
+            var pubgPlayerSeason = await PlayerHelper.GetPlayerSeason(pubgPlayer, PubgRegion.PCNorthAmerica, currentSeason);
+
+            switch(this._stat)
             {
-                PlayerNames = new string[] { this._playerName }
-            };
-            
-            try
-            {
-                var pubgPlayers = await _playerService.GetPlayersAsync(PubgRegion.PCNorthAmerica, playerFilter);
-                using (var pubgPlayersEnumerator = pubgPlayers.GetEnumerator())
+                case "wins":
                 {
-                    if (pubgPlayersEnumerator.MoveNext())
-                    {
-                        var playerId = pubgPlayersEnumerator.Current.Id;
-                        var pubgPlayer = await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, playerId, currentSeason.Id);
-                        return string.Format("{0} has {1} win(s) in duo FPP this season", this._playerName, pubgPlayer.GameModeStats.DuoFPP.Wins);
-                    }
-                }
-            } 
-            catch (PubgNotFoundException)
-            {
-                return string.Format("error - could not find stats for player {0}", this._playerName);
-            }
+                    var wins = SeasonHelper.GetWins(pubgPlayerSeason.GameModeStats, this._perspective, this._teamSize);
 
-            return string.Format("error - could not find stats for player {0}", this._playerName);
+                    var message = string.Format("{0} has {1} wins", this._playerName, wins);
+
+                    if (this._perspective.HasValue || this._teamSize.HasValue)
+                    {
+                        message += " in ";
+                        message += this._perspective.HasValue ? TypeHelper.PerspectiveToString(this._perspective) + " " : "";
+                        message += this._teamSize.HasValue ? TypeHelper.TeamSizeToString(this._teamSize): "";
+                    }
+
+                    return message.Trim();
+                }
+
+                default:
+                    return string.Format("stat {0} not supported", this._stat);
+            }
         }
+
     }
 }

@@ -14,7 +14,7 @@ namespace DiscordBot
         public async Task MainAsync()
         {
             var config = Configuration.Create();
-            var bot = new DiscordBot(config);
+            var bot = new DiscordBot();
             bot.LoginAndStartAsync();
 
             PubgApiConfiguration.Configure(opt =>

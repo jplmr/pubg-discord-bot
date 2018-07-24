@@ -3,23 +3,22 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Pubg.Net;
+using Pubg.Net.Exceptions;
 
 namespace DiscordBot
 {
     public class DiscordBot : DiscordSocketClient
     {
-        private Configuration _config;
         private CommandParser _commandParser;
-        public DiscordBot(Configuration config)
+        public DiscordBot()
         {
-            this._config = config;
             this.Ready += this.HandleReadyAsync;
             this.MessageReceived += this.HandleMessageReceivedAsync;
         }
 
         public async void LoginAndStartAsync()
         {
-            await LoginAsync(TokenType.Bot, this._config.discordToken);
+            await LoginAsync(TokenType.Bot, Configuration.ActiveConfiguration.discordToken);
             await StartAsync();
         }
 
@@ -33,8 +32,19 @@ namespace DiscordBot
                     return;
                 }
 
-                var response = await parsedCommand.Execute();
-                await message.Channel.SendMessageAsync(response);
+                try
+                {
+                    var response = await parsedCommand.Execute();
+                    await message.Channel.SendMessageAsync(response);
+                }
+                catch (PubgTooManyRequestsException)
+                {
+                    await message.Channel.SendMessageAsync("sorry, we're being rate limited, please try again in one minute");
+                }
+                catch (PubgNotFoundException)
+                {
+                    await message.Channel.SendMessageAsync("sorry, we couldn't find anything for that player");
+                }
             }
         }
 

@@ -3,63 +3,64 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Discord.WebSocket;
 
-namespace DiscordBot
+namespace DiscordBot {
+
+public class CommandParser
 {
-    public class CommandParser
+    private ulong _botId;
+
+    public static Dictionary<Regex, Type> Commands = new Dictionary<Regex, Type>()
     {
-        private ulong _botId;
+        { new Regex(@"(wins|losses|kills|assits|deaths|kd|kda)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?", RegexOptions.IgnoreCase), typeof(StatsCommand) },
+        { new Regex(@"(help)", RegexOptions.IgnoreCase), typeof(HelpCommand) },
+    };
 
-        private Dictionary<Regex, Type> commands = new Dictionary<Regex, Type>()
+    public CommandParser(ulong botId)
+    {
+        this._botId = botId;
+    }
+
+    public ICommand ParseCommand(SocketMessage message)
+    {
+        if (!IsAtMe(message))
         {
-            { new Regex(@"(wins|losses|kills|assits|deaths|kd|kda)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?", RegexOptions.IgnoreCase), typeof(StatsCommand) }
-        };
-
-        public CommandParser(ulong botId)
-        {
-            this._botId = botId;
-        }
-
-        public ICommand ParseCommand(SocketMessage message)
-        {
-            if (!IsAtMe(message))
-            {
-                return null;
-            }
-
-            foreach (KeyValuePair<Regex, Type> command in commands)
-            {
-                Match matches = command.Key.Match(message.Content);
-                if (matches.Groups.Count > 1)
-                {
-                    string[] commandArguments = new string[matches.Groups.Count - 1];
-                    for(int i = 0; i < matches.Groups.Count - 1; ++i)
-                    {
-                        commandArguments[i] = matches.Groups[i + 1].Value;
-                    }
-
-                    return (ICommand) Activator.CreateInstance(command.Value, new object[] { commandArguments });
-                }
-            }
-
             return null;
         }
 
-        private bool IsAtMe(SocketMessage message)
+        foreach (KeyValuePair<Regex, Type> command in CommandParser.Commands)
         {
-            using (var usersEnumerator = message.MentionedUsers.GetEnumerator())
+            Match matches = command.Key.Match(message.Content);
+            if (matches.Groups.Count > 1)
             {
-                while (usersEnumerator.MoveNext())
+                string[] commandArguments = new string[matches.Groups.Count - 1];
+                for(int i = 0; i < matches.Groups.Count - 1; ++i)
                 {
-                    if (usersEnumerator.Current.Id == this._botId)
-                    {
-                        return true;
-                    }
+                    commandArguments[i] = matches.Groups[i + 1].Value;
                 }
 
-                return false;
+                return (ICommand) Activator.CreateInstance(command.Value, new object[] { commandArguments });
             }
         }
 
+        return null;
     }
+
+    private bool IsAtMe(SocketMessage message)
+    {
+        using (var usersEnumerator = message.MentionedUsers.GetEnumerator())
+        {
+            while (usersEnumerator.MoveNext())
+            {
+                if (usersEnumerator.Current.Id == this._botId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+}
 
 }

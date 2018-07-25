@@ -19,7 +19,6 @@ namespace DiscordBot
             this._playerName = commandArguments[1];
             this._teamSize = TypeHelper.GetTeamSize(commandArguments[2]);
             this._perspective = TypeHelper.GetPerspective(commandArguments[3]);
-
             this._playerService = new PubgPlayerService();
         }
 

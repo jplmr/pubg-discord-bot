@@ -24,13 +24,17 @@ namespace DiscordBot
 
         private async Task HandleMessageReceivedAsync(SocketMessage message)
         {
+            if (!CommandParser.IsAtMe(message, this.CurrentUser.Id))
+            {
+                return;
+            }
+
             if (!message.Author.IsBot && message.Author.Id != this.CurrentUser.Id)
             {
                 var parsedCommand = this._commandParser.ParseCommand(message);
                 if (parsedCommand == null)
                 {
-                    await message.Channel.SendMessageAsync("sorry, I don't understand that command");
-                    return;
+                    await message.Channel.SendMessageAsync("sorry, I don't understand that yet");
                 }
 
                 try

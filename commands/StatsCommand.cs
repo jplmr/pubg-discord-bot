@@ -15,7 +15,7 @@ namespace DiscordBot
         private PubgPlayerService _playerService;
 
         public StatsCommand(string[] commandArguments){
-            this._stat = StatHelper.StatTypeMap[commandArguments[0]];
+            this._stat = StatHelper.StatTypeMap[commandArguments[0].ToLower()];
             this._playerName = commandArguments[1];
             this._teamSize = TypeHelper.GetTeamSize(commandArguments[2]);
             this._perspective = TypeHelper.GetPerspective(commandArguments[3]);
@@ -43,8 +43,8 @@ namespace DiscordBot
                 message += this._perspective.HasValue ? TypeHelper.PerspectiveToString(this._perspective) + " " : "";
                 message += this._teamSize.HasValue ? TypeHelper.TeamSizeToString(this._teamSize): "";
             }
-
-            return message.Trim();
+            
+            return message.Trim() + " this sesason";
         }
     }
 }

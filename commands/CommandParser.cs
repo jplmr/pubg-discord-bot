@@ -11,8 +11,8 @@ public class CommandParser
 
     public static Dictionary<Regex, Type> Commands = new Dictionary<Regex, Type>()
     {
-        { new Regex(@"(wins|losses|kills|assits|deaths|kd|kda)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?", RegexOptions.IgnoreCase), typeof(StatsCommand) },
-        { new Regex(@"(help)", RegexOptions.IgnoreCase), typeof(HelpCommand) },
+        { new Regex(@"^(wins|losses|kills|assists|deaths|kd|kda|matches)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?$", RegexOptions.IgnoreCase), typeof(StatsCommand) },
+        { new Regex(@"^(help)\s*(\w*)$", RegexOptions.IgnoreCase), typeof(HelpCommand) },
     };
 
     public CommandParser(ulong botId)
@@ -22,14 +22,12 @@ public class CommandParser
 
     public ICommand ParseCommand(SocketMessage message)
     {
-        if (!IsAtMe(message))
-        {
-            return null;
-        }
+        var mentionedUserRegex = new Regex(@"<@\d+>");
+        var commandString = mentionedUserRegex.Replace(message.Content, "").Trim();
 
         foreach (KeyValuePair<Regex, Type> command in CommandParser.Commands)
         {
-            Match matches = command.Key.Match(message.Content);
+            Match matches = command.Key.Match(commandString);
             if (matches.Groups.Count > 1)
             {
                 string[] commandArguments = new string[matches.Groups.Count - 1];
@@ -45,13 +43,13 @@ public class CommandParser
         return null;
     }
 
-    private bool IsAtMe(SocketMessage message)
+    public static bool IsAtMe(SocketMessage message, ulong botId)
     {
         using (var usersEnumerator = message.MentionedUsers.GetEnumerator())
         {
             while (usersEnumerator.MoveNext())
             {
-                if (usersEnumerator.Current.Id == this._botId)
+                if (usersEnumerator.Current.Id == botId)
                 {
                     return true;
                 }

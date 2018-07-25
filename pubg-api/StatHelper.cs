@@ -16,7 +16,8 @@ public enum StatType
     Assists,
     Deaths,
     KillDeathRatio,
-    KillAssistDeathRatio
+    KillAssistDeathRatio,
+    Matches
 }
 
 public static class StatHelper
@@ -29,15 +30,18 @@ public static class StatHelper
         { "deaths", StatType.Deaths },
         { "kd", StatType.KillDeathRatio },
         { "kda", StatType.KillAssistDeathRatio },
+        { "matches", StatType.Matches },
     };
 
     public static Dictionary<StatType, string> StatTypeFormatMap = new Dictionary<StatType, string>(){
         { StatType.Wins, "{0} has {1} wins" },
         { StatType.Losses, "{0} has {1} losses" },
+        { StatType.Assists, "{0} has {1} assists" },
         { StatType.Kills, "{0} has {1} kills" },
         { StatType.Deaths, "{0} has {1} deaths" },
         { StatType.KillDeathRatio, "{0}'s KD ratio is {1}" },
         { StatType.KillAssistDeathRatio, "{0}'s KDA ratio is {1}" },
+        { StatType.Matches, "{0} has played {1} match(es)" },
     };
 
     private static Dictionary<StatType, Tuple<StatAggregator, GetStat>> _statAggregators = new Dictionary<StatType, Tuple<StatAggregator, GetStat>>()
@@ -47,6 +51,7 @@ public static class StatHelper
         { StatType.Kills, new Tuple<StatAggregator, GetStat>(SumIntegers, (gameModeStats) => { return gameModeStats.Kills; }) },
         { StatType.Assists, new Tuple<StatAggregator, GetStat>(SumIntegers, (gameModeStats) => { return gameModeStats.Assists; }) },
         { StatType.Deaths, new Tuple<StatAggregator, GetStat>(SumIntegers, (gameModeStats) => { return gameModeStats.RoundsPlayed - gameModeStats.Wins; }) },
+        { StatType.Matches, new Tuple<StatAggregator, GetStat>(SumIntegers, (gameModeStats) => { return gameModeStats.RoundsPlayed; }) },
         { StatType.KillDeathRatio, new Tuple<StatAggregator, GetStat>(CaluclateKillDeathRatio, null) },
         { StatType.KillAssistDeathRatio, new Tuple<StatAggregator, GetStat>(CaluclateKillAssistDeathRatio, null) },
     };

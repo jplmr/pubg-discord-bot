@@ -29,6 +29,7 @@ namespace DiscordBot
                 var parsedCommand = this._commandParser.ParseCommand(message);
                 if (parsedCommand == null)
                 {
+                    await message.Channel.SendMessageAsync("sorry, I don't understand that command");
                     return;
                 }
 

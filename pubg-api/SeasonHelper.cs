@@ -40,7 +40,7 @@ public static class SeasonHelper
         return wins;
     }
 
-    private static PubgGameModeStats[] GetGameModeStats(PubgSeasonStats seasonStats, Perspective? perspective, TeamSize? teamSize)
+    public static PubgGameModeStats[] GetGameModeStats(PubgSeasonStats seasonStats, Perspective? perspective, TeamSize? teamSize)
     {
         Perspective[] perspectives = perspective.HasValue ? new Perspective[] { perspective.Value } : (Perspective[]) Enum.GetValues(typeof(Perspective));
         TeamSize[] teamSizes = teamSize.HasValue ? new TeamSize[] { teamSize.Value } : (TeamSize[]) Enum.GetValues(typeof(TeamSize));

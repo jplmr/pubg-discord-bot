@@ -7,7 +7,7 @@ namespace DiscordBot
 {
     public class StatsCommand : ICommand
     {
-        private string _stat;
+        private StatType _stat;
         private string _playerName;
         private TeamSize? _teamSize;
         private Perspective? _perspective;
@@ -15,7 +15,7 @@ namespace DiscordBot
         private PubgPlayerService _playerService;
 
         public StatsCommand(string[] commandArguments){
-            this._stat = commandArguments[0];
+            this._stat = StatHelper.StatTypeMap[commandArguments[0]];
             this._playerName = commandArguments[1];
             this._teamSize = TypeHelper.GetTeamSize(commandArguments[2]);
             this._perspective = TypeHelper.GetPerspective(commandArguments[3]);
@@ -33,29 +33,19 @@ namespace DiscordBot
 
             var pubgPlayer = await PlayerHelper.GetPlayerFromName(this._playerName, PubgRegion.PCNorthAmerica);
             var pubgPlayerSeason = await PlayerHelper.GetPlayerSeason(pubgPlayer, PubgRegion.PCNorthAmerica, currentSeason);
+            var gameModeStats = SeasonHelper.GetGameModeStats(pubgPlayerSeason.GameModeStats, this._perspective, this._teamSize);
 
-            switch(this._stat)
+            var statResult = StatHelper.GetStats(this._stat, gameModeStats);
+            var message = string.Format(StatHelper.StatTypeFormatMap[this._stat], this._playerName, statResult);
+
+            if (this._perspective.HasValue || this._teamSize.HasValue)
             {
-                case "wins":
-                {
-                    var wins = SeasonHelper.GetWins(pubgPlayerSeason.GameModeStats, this._perspective, this._teamSize);
-
-                    var message = string.Format("{0} has {1} wins", this._playerName, wins);
-
-                    if (this._perspective.HasValue || this._teamSize.HasValue)
-                    {
-                        message += " in ";
-                        message += this._perspective.HasValue ? TypeHelper.PerspectiveToString(this._perspective) + " " : "";
-                        message += this._teamSize.HasValue ? TypeHelper.TeamSizeToString(this._teamSize): "";
-                    }
-
-                    return message.Trim();
-                }
-
-                default:
-                    return string.Format("stat {0} not supported", this._stat);
+                message += " in ";
+                message += this._perspective.HasValue ? TypeHelper.PerspectiveToString(this._perspective) + " " : "";
+                message += this._teamSize.HasValue ? TypeHelper.TeamSizeToString(this._teamSize): "";
             }
-        }
 
+            return message.Trim();
+        }
     }
 }

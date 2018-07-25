@@ -6,11 +6,14 @@ using Pubg.Net;
 namespace DiscordBot
 {
 
+using PlayerSeasonKey = Tuple<string, PubgRegion, string>;
+
 public static class PlayerHelper
 {
-    private static TimeSpan cacheTimeout = new TimeSpan(0, 5, 0);
+    private static TimeSpan cacheTimeout = new TimeSpan(0, 1, 0);
     private static PubgPlayerService _playerService = new PubgPlayerService(Configuration.ActiveConfiguration.pubgToken);
     private static Dictionary<string, Tuple<PubgPlayer, DateTime>> cachedPlayers = new Dictionary<string, Tuple<PubgPlayer, DateTime>>();
+    private static Dictionary<PlayerSeasonKey, Tuple<PubgPlayerSeason, DateTime>> cachedPlayerSeasons = new Dictionary<PlayerSeasonKey, Tuple<PubgPlayerSeason, DateTime>>();
 
     public static async Task<PubgPlayer> GetPlayerFromName(string playerName, PubgRegion region)
     {
@@ -41,7 +44,16 @@ public static class PlayerHelper
 
     public static async Task<PubgPlayerSeason> GetPlayerSeason(PubgPlayer player, PubgRegion region, PubgSeason season)
     {
-        return await _playerService.GetPlayerSeasonAsync(PubgRegion.PCNorthAmerica, player.Id, season.Id);
+        var cacheKey = new PlayerSeasonKey(player.Id, region, season.Id);
+        if (cachedPlayerSeasons.ContainsKey(cacheKey) && DateTime.Now - cachedPlayerSeasons[cacheKey].Item2 < cacheTimeout)
+        {
+            System.Console.WriteLine("Cache hit for player season {0}", player.Name);
+            return cachedPlayerSeasons[cacheKey].Item1;
+        }
+
+        var pubgPlayerSeason = await _playerService.GetPlayerSeasonAsync(region, player.Id, season.Id);
+        cachedPlayerSeasons[cacheKey] = new Tuple<PubgPlayerSeason, DateTime>(pubgPlayerSeason, DateTime.Now);
+        return pubgPlayerSeason;
     }
 
 }

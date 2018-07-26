@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Pubg.Net;
 using Pubg.Net.Models.Stats;
 
@@ -27,19 +28,6 @@ public static class SeasonHelper
         return currentSeason;
     }
 
-    public static uint GetWins(PubgSeasonStats seasonStats, Perspective? perspective, TeamSize? teamSize)
-    {
-        uint wins = 0;
-        var gameModeStatsArray = GetGameModeStats(seasonStats, perspective, teamSize);
-
-        foreach (PubgGameModeStats gameModeStats in gameModeStatsArray)
-        {
-            wins += (uint) gameModeStats.Wins;
-        }
-
-        return wins;
-    }
-
     public static PubgGameModeStats[] GetGameModeStats(PubgSeasonStats seasonStats, Perspective? perspective, TeamSize? teamSize)
     {
         Perspective[] perspectives = perspective.HasValue ? new Perspective[] { perspective.Value } : (Perspective[]) Enum.GetValues(typeof(Perspective));
@@ -61,6 +49,20 @@ public static class SeasonHelper
         }
 
         return gameModeStats.ToArray();
+    }
+    public static async Task<PubgGameModeStats[]> GetCurrentSeasonStatsForPlayer(string playerName, PubgRegion region, Perspective? perspective, TeamSize? teamSize)
+    {
+        var currentSeason = SeasonHelper.GetCurrentSeason();
+        if (currentSeason == null)
+        {
+            return null;
+        }
+
+        var pubgPlayer = await PlayerHelper.GetPlayerFromName(playerName, PubgRegion.PCNorthAmerica);
+        var pubgPlayerSeason = await PlayerHelper.GetPlayerSeason(pubgPlayer, PubgRegion.PCNorthAmerica, currentSeason);
+        var gameModeStats = SeasonHelper.GetGameModeStats(pubgPlayerSeason.GameModeStats, perspective, teamSize);
+
+        return gameModeStats;
     }
 
 }

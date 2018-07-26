@@ -12,6 +12,7 @@ public class CommandParser
     public static Dictionary<Regex, Type> Commands = new Dictionary<Regex, Type>()
     {
         { new Regex(@"^(wins|losses|kills|assists|deaths|kd|kda|matches)\s+(\w+)\s*(solo|duo|squad)?\s*(fpp|tpp)?$", RegexOptions.IgnoreCase), typeof(StatsCommand) },
+        { new Regex(@"^(compare)\s+(\w+)\s+(\w+)?\s*(solo|duo|suqad)?\s*(fpp|tpp)?$", RegexOptions.IgnoreCase), typeof(CompareCommand) },
         { new Regex(@"^(help)\s*(\w*)$", RegexOptions.IgnoreCase), typeof(HelpCommand) },
     };
 

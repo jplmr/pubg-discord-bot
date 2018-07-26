@@ -16,6 +16,7 @@ public class HelpCommand : ICommand
         { "kd", new Tuple<string, string>("playerName (solo|duo|squad) (fpp|tpp)", "kill/death ratio") },
         { "kda", new Tuple<string, string>("playerName (solo|duo|squad) (fpp|tpp)", "(kill+assist)/death ratio") },
         { "matches", new Tuple<string, string>("playerName (solo|duo|squad) (fpp|tpp)", "number of matches played") },
+        { "compare", new Tuple<string, string>("playerName playerName (solo|duo|squad) (fpp|tpp)", "compare all available stats for given players") },
         { "help", new Tuple<string, string>("(command)", "get help") },
     };
 

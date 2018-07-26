@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Pubg.Net;
 using Pubg.Net.Exceptions;
+using Pubg.Net.Models.Stats;
 
 namespace DiscordBot
 {
@@ -12,27 +13,20 @@ namespace DiscordBot
         private TeamSize? _teamSize;
         private Perspective? _perspective;
 
-        private PubgPlayerService _playerService;
-
         public StatsCommand(string[] commandArguments){
             this._stat = StatHelper.StatTypeMap[commandArguments[0].ToLower()];
             this._playerName = commandArguments[1];
             this._teamSize = TypeHelper.GetTeamSize(commandArguments[2]);
             this._perspective = TypeHelper.GetPerspective(commandArguments[3]);
-            this._playerService = new PubgPlayerService();
         }
 
         public async Task<string> Execute()
         {
-            var currentSeason = SeasonHelper.GetCurrentSeason();
-            if (currentSeason == null)
+            var gameModeStats = await SeasonHelper.GetCurrentSeasonStatsForPlayer(this._playerName, PubgRegion.PCNorthAmerica, this._perspective, this._teamSize);
+            if (gameModeStats == null)
             {
-                return "error - no active season";
+                return "error - no stats for active season";
             }
-
-            var pubgPlayer = await PlayerHelper.GetPlayerFromName(this._playerName, PubgRegion.PCNorthAmerica);
-            var pubgPlayerSeason = await PlayerHelper.GetPlayerSeason(pubgPlayer, PubgRegion.PCNorthAmerica, currentSeason);
-            var gameModeStats = SeasonHelper.GetGameModeStats(pubgPlayerSeason.GameModeStats, this._perspective, this._teamSize);
 
             var statResult = StatHelper.GetStats(this._stat, gameModeStats);
             var message = string.Format(StatHelper.StatTypeFormatMap[this._stat], this._playerName, statResult);
